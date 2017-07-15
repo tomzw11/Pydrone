@@ -1,0 +1,5 @@
+['test.py']
+navdata: logs/navdata_170625_221912.bin
+cmd: logs/cmd_170625_221912.bin
+console: logs/console_170625_221912.txt
+now: datetime.datetime(2017, 6, 25, 22, 19, 12, 302502)

@@ -1,0 +1,5 @@
+['video2stdout.py']
+navdata: logs/navdata_170601_162952.bin
+cmd: logs/cmd_170601_162952.bin
+console: logs/console_170601_162952.txt
+now: datetime.datetime(2017, 6, 1, 16, 29, 52, 379797)

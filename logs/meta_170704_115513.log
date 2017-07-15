@@ -1,0 +1,5 @@
+['moveByEnd.py']
+navdata: logs/navdata_170704_115513.bin
+cmd: logs/cmd_170704_115513.bin
+console: logs/console_170704_115513.txt
+now: datetime.datetime(2017, 7, 4, 11, 55, 13, 912582)
