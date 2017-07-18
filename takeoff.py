@@ -12,7 +12,9 @@ drone.moveCamera( tilt=-90, pan=0 )
 try:
 
 	drone.takeoff()
-	drone.calibrate(1,0)
+	#drone.moveBy(1,0)
+	drone.moveY(1,45)
+	drone.stop()
 	drone.land()
 
 except (ManualControlException,Exception), e:

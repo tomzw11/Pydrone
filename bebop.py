@@ -10,6 +10,7 @@ import datetime
 import struct
 import time
 import numpy as np
+import math
 
 from navdata import *
 from commands import *
@@ -19,9 +20,6 @@ from video import VideoFrames
 # this will be in new separate repository as common library fo droneika Python-powered drones
 from apyros.metalog import MetaLog, disableAsserts
 from apyros.manual import myKbhit, ManualControlException
-
-
-# hits from https://github.com/ARDroneSDK3/ARSDKBuildUtils/issues/5
 
 HOST = "192.168.42.1"
 DISCOVERY_PORT = 44444
@@ -232,9 +230,20 @@ class Bebop:
     def resetHome( self ):
         self.update( cmd=resetHomeCmd() )
 
-    def moveX( self, dX, timeout=3.0 ):
-        speed = 10
-        #print 'distance', dX
+    def stop( self, timeout=3.0 ):
+
+        print 'stopping the drone'
+        startTime = self.time
+        droneSpeed = self.speed[0]**2+self.speed[1]**2
+        while(self.time-startTime<timeout and droneSpeed>0.25):
+            self.update( movePCMDCmd( True, -self.speed[1]*3, self.speed[0]*3, 0, 0 ) )
+            droneSpeed = self.speed[0]**2+self.speed[1]**2
+            print self.speed
+            print 'droneSpeed', droneSpeed
+        self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
+
+    def moveX( self, dX, speed, timeout=3.0 ):
+        print 'moveX', dX
         if(dX < 0):
             speed = -speed
         assert self.time is not None
@@ -242,13 +251,20 @@ class Bebop:
         startPos = self.position[1]
         
         while abs(self.position[1]-startPos) < dX and self.time-startTime < timeout:
-            self.update( movePCMDCmd( True, 0, speed, 0, 0 ) )
+
+            if(self.speed[0] > 0.2):
+                self.update( movePCMDCmd( True, speed, -10, 0, 0 ) )
+            elif(self.speed[0] < -0.2):
+                self.update( movePCMDCmd( True, speed, 10, 0, 0 ) )
+            else:
+                self.update( movePCMDCmd( True, speed, 0, 0, 0 ) )
+            print 'speed ',self.speed
+            print 'position ',self.position
         
         self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
 
-    def moveY( self, dY, timeout=3.0 ):
-        speed = 10
-        #print 'distance', dX
+    def moveY( self, dY, speed, timeout=3.0 ):
+        print 'moveY', dY
         if(dY < 0):
             speed = -speed
         assert self.time is not None
@@ -256,7 +272,15 @@ class Bebop:
         startPos = self.position[0]
         
         while abs(self.position[0]-startPos) < dY and self.time-startTime < timeout:
-            self.update( movePCMDCmd( True, speed, 0, 0, 0 ) )
+
+            if(self.speed[1] > 0.2):
+                self.update( movePCMDCmd( True, -10, speed, 0, 0 ) )
+            elif(self.speed[1] < -0.2):
+                self.update( movePCMDCmd( True, 10, speed, 0, 0 ) )
+            else:
+                self.update( movePCMDCmd( True, 0, speed, 0, 0 ) )
+            # print 'speed ',self.speed
+            # print 'position ',self.position
         
         self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
 
@@ -282,43 +306,55 @@ class Bebop:
 
         self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
 
-    # old version
-    # def moveBy( self, dX, dY):
-    #     rootPosition = drone.position
-    #     print 'moveby starting position ', rootPosition
-    #     print 'move by ', dX, dY
-    #     startTime = drone.time
-    #     timeout = 5
-    #     while drone.time-startTime < timeout and math.sqrt((rootPosition[1]+dX-drone.position[1])**2+(rootPosition[2]+dY-drone.position[2])**2) > 1:
-    #         drone.update( cmd=movePCMDCmd( True, 20, 20, 0, 0 ) )
-    #         print 'current position ', drone.position
-    #         #drone.wait(0.1)
-    #     drone.update( cmd=movePCMDCmd( True, 0, 0, 0, 0 ) )
+    def moveBy( self, dX, dY, timeout=3.0):
+        startTime = self.time
+        self.calibrate(dX,dY)
+        print 'speed= ',self.speed
+        # while(self.time-startTime<timeout and (abs(self.speed[0])>0.1 or abs(self.speed[1])> 0.1 or abs(self.speed[2])>0.1)):
+        #     self.hover()
+        # print 'speed after update= ',self.speed
+        print 'move by ', dX, dY
+        print 'starting position',self.position
+        # self.wait(1)
+        # rootPosition = self.position
+        # startTime = self.time
 
-    def calibrate( self, dX, dY, timeout=3.0 ):
+        # print 'moveby starting position ', rootPosition
+ 
+        # while self.time-startTime < timeout and math.sqrt((rootPosition[1]+dX-self.position[1])**2+(rootPosition[2]+dY-self.position[2])**2) > 0.5:
+        #     self.update( cmd=movePCMDCmd( True, 0, 20, 0, 0 ) )
+        #     print 'current position ', self.position
+        self.moveY(1,30)
+        print 'end position',self.position
+        #self.update( cmd=movePCMDCmd( True, 0, 0, 0, 0 ) )
+
+    def calibrate( self, dX, dY, timeout=5.0 ):
 
         startTime = self.time
-        speed = 50
+        speed = 60
         dP = [0]*2
         dP[0] = dX+self.position[0] # x,y positions are negative
         dP[1] = dY+self.position[1]
         print 'startangle= ',self.angle[2]
-        print 'dP= ', dP
         rotation = np.arctan2(dP[0],dP[1])
         print 'rotation= ',rotation
+        if(rotation+self.angle[2]>math.pi):
+            rotateAngle = abs(2*math.pi-rotation-self.angle[2])
+        elif(rotation+self.angle[2]<-math.pi):
+            rotateAngle = abs(2*math.pi+rotation+self.angle[2])
+        else:
+            rotateAngle = self.angle[2]+rotation 
 
         if(rotation < 0):
-            print 'counterclockwise'
-            while abs(self.angle[2]-rotation) > 0.2 and self.time-startTime < timeout:
-                print 'angle= ', self.angle[2]
+            print 'counterclockwise', rotateAngle
+            while abs(self.angle[2]-rotateAngle) > 0.1 and self.time-startTime < timeout:
                 self.update( movePCMDCmd( True, 0, 0, -speed, 0 ) )
             self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
             print 'end angle= ',self.angle[2]
             return
         else:
-            print 'clockwise'
-            while abs(self.angle[2]-rotation) > 0.2 and self.time-startTime < timeout:
-                print 'angle= ', self.angle[2]
+            print 'clockwise',rotateAngle
+            while abs(self.angle[2]-rotateAngle) > 0.1 and self.time-startTime < timeout:
                 self.update( movePCMDCmd( True, 0, 0, speed, 0 ) )
             self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
             print 'end angle= ',self.angle[2]
@@ -361,154 +397,6 @@ class Bebop:
         while self.time-startTime < duration:
             self.update()
 
-###############################################################################################
-
-def testCamera( drone ):
-    for i in xrange(10):
-        print -i,
-        drone.update( cmd=None )
-    drone.resetHome()
-    drone.videoEnable()
-    for i in xrange(100):
-        print i,
-        drone.update( cmd=None )
-        drone.moveCamera( tilt=i, pan=i ) # up & right
-
-
-def testEmergency( drone ):
-    "test of reported state change"
-    drone.takeoff()
-    drone.emergency()
-    for i in xrange(10):
-        print i,
-        drone.update( cmd=None )
-
-
-def testTakeoff( drone ):
-    drone.videoEnable()
-    drone.takeoff()
-    for i in xrange(100):
-        print i,
-        drone.update( cmd=None )
-    drone.land()
-    for i in xrange(100):
-        print i,
-        drone.update( cmd=None )
-    print
-
-
-def testManualControlException( drone ):
-    drone.videoEnable()
-    try:
-        drone.trim()
-        drone.takeoff()
-        drone.land()
-    except ManualControlException, e:
-        print
-        print "ManualControlException"
-        if drone.flyingState is None or drone.flyingState == 1: # taking off
-            # unfortunately it is not possible to land during takeoff for ARDrone3 :(
-            drone.emergency()
-        drone.land()
-
-
-def testFlying( drone ):
-    drone.videoEnable()
-    try:
-        drone.trim()
-        drone.takeoff()
-        drone.flyToAltitude( 2.0 )
-        drone.wait( 2.0 )
-        drone.flyToAltitude( 1.0 )
-        drone.land()
-    except ManualControlException, e:
-        print
-        print "ManualControlException"
-        if drone.flyingState is None or drone.flyingState == 1: # taking off
-            # unfortunately it is not possible to land during takeoff for ARDrone3 :(
-            drone.emergency()
-        drone.land()
-
-
-def testFlyForward( drone ):
-    drone.videoEnable()
-    try:
-        speed = 20
-        drone.trim()
-        drone.takeoff()
-        for i in xrange(1000):
-            drone.update( cmd=movePCMDCmd( True, 0, speed, 0, 0 ) )
-            print drone.altitude
-        drone.update( cmd=movePCMDCmd( True, 0, 0, 0, 0 ) )
-        drone.land()
-    except ManualControlException, e:
-        print
-        print "ManualControlException"
-        if drone.flyingState is None or drone.flyingState == 1: # taking off
-            # unfortunately it is not possible to land during takeoff for ARDrone3 :(
-            drone.emergency()
-        drone.land()
-
-
-def testTakePicture( drone ):
-    print "TEST take picture"
-    drone.videoEnable()
-    for i in xrange(10):
-        print i,
-        drone.update( cmd=None )
-    drone.takePicture()
-    for i in xrange(10):
-        print i,
-        drone.update( cmd=None )
-
-g_testVideoIndex = 0
-def videoCallback( data, drone=None, debug=False ):
-    global g_testVideoIndex
-    g_testVideoIndex += 1
-    pass #print "Video", len(data)
-
-
-
-def testVideoProcessing( drone ):
-    print "TEST video"
-    drone.videoCbk = videoCallback
-    drone.videoEnable()
-    prevVideoIndex = 0
-    for i in xrange(400):
-        if i % 10 == 0:
-            if prevVideoIndex == g_testVideoIndex:
-                sys.stderr.write('.')
-            else:
-                sys.stderr.write('o')
-            prevVideoIndex = g_testVideoIndex
-        if i == 200:
-            print "X"
-            drone.update( cmd=movePCMDCmd( False, 0, 0, 0, 0 ) )
-        drone.update( cmd=None )
-
-def testVideoRecording( drone ):
-    drone.videoEnable()
-    for i in xrange(100):
-        print i,
-        drone.update( cmd=None )
-        if drone.time is not None:
-            break
-    print "START"
-    drone.update( cmd=videoRecordingCmd( on=True ) )
-    drone.wait( 10.0 )
-    print "STOP"
-    drone.update( cmd=videoRecordingCmd( on=False ) )
-    drone.wait( 2.0 )
-
-
-def testSpin( drone ):
-    "the motors do not spin - the behavior is different to Rolling Spider"
-    for i in xrange(10):
-        drone.update( cmd=movePCMDCmd( True, 0, 0, 0, 0 ) )
-    for i in xrange(10):
-        drone.update( cmd=movePCMDCmd( False, 0, 0, 0, 0 ) )
-
-
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print __doc__
@@ -520,16 +408,7 @@ if __name__ == "__main__":
         disableAsserts()
 
     drone = Bebop( metalog=metalog )
-#    testCamera( drone )
-#    testEmergency( drone )
-#    testTakeoff( drone )
-#    testManualControlException( drone )
-#    testTakePicture( drone )
-#    testFlying( drone )
-#    testFlyForward( drone )
-    testVideoProcessing( drone )
-#    testVideoRecording( drone )
-#    testSpin( drone )
+
     print "Battery:", drone.battery
 
 # vim: expandtab sw=4 ts=4 
