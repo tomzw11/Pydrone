@@ -160,11 +160,7 @@ class Bebop:
 
 
     def takeoff( self ):
-        #self.update( videoRecordingCmd( on=True ) )
-        for i in xrange(10):
-            print i,
-            self.update( cmd=None )
-        print
+       
         print "Taking off ...",
         self.update( cmd=takeoffCmd() )
         prevState = None
@@ -191,8 +187,13 @@ class Bebop:
             self.update( cmd=None )
         print
 
-    def hover( self ):
-        self.update( cmd=movePCMDCmd( active=True, roll=0, pitch=0, yaw=0, gaz=0 ) )
+    def hover( self, timeout ):
+        startTime = self.time
+        count = 0
+        while(self.time-startTime<timeout):
+            self.update( cmd=movePCMDCmd( active=True, roll=0, pitch=0, yaw=0, gaz=0 ) )
+            count += 1
+        print count
 
     def emergency( self ):
         self.update( cmd=emergencyCmd() )
@@ -236,10 +237,11 @@ class Bebop:
         startTime = self.time
         droneSpeed = self.speed[0]**2+self.speed[1]**2
         while(self.time-startTime<timeout and droneSpeed>0.25):
-            self.update( movePCMDCmd( True, -self.speed[1]*3, self.speed[0]*3, 0, 0 ) )
+            self.update( movePCMDCmd( True, self.speed[1]*50, self.speed[0]*50, 0, 0 ) )
             droneSpeed = self.speed[0]**2+self.speed[1]**2
-            print self.speed
-            print 'droneSpeed', droneSpeed
+            # print 'droneSpeed', droneSpeed
+            # print self.speed
+        print 'landing postition',self.position
         self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
 
     def moveX( self, dX, speed, timeout=3.0 ):
@@ -279,9 +281,6 @@ class Bebop:
                 self.update( movePCMDCmd( True, 10, speed, 0, 0 ) )
             else:
                 self.update( movePCMDCmd( True, 0, speed, 0, 0 ) )
-            # print 'speed ',self.speed
-            # print 'position ',self.position
-        
         self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
 
     def moveZ( self, altitude, timeout=3.0 ):
@@ -306,42 +305,31 @@ class Bebop:
 
         self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
 
-    def moveBy( self, dX, dY, timeout=3.0):
-        startTime = self.time
-        self.calibrate(dX,dY)
-        print 'speed= ',self.speed
-        # while(self.time-startTime<timeout and (abs(self.speed[0])>0.1 or abs(self.speed[1])> 0.1 or abs(self.speed[2])>0.1)):
-        #     self.hover()
-        # print 'speed after update= ',self.speed
+    def moveBy( self, dX, dY, timeout=6.0):
         print 'move by ', dX, dY
         print 'starting position',self.position
-        # self.wait(1)
-        # rootPosition = self.position
-        # startTime = self.time
-
-        # print 'moveby starting position ', rootPosition
- 
-        # while self.time-startTime < timeout and math.sqrt((rootPosition[1]+dX-self.position[1])**2+(rootPosition[2]+dY-self.position[2])**2) > 0.5:
-        #     self.update( cmd=movePCMDCmd( True, 0, 20, 0, 0 ) )
-        #     print 'current position ', self.position
-        self.moveY(1,30)
+        startTime = self.time
+        self.calibrate(dX,dY)
+        print 'time',self.time
+        self.moveY(1,20)
+        while(self.time-startTime<timeout and self.altitude<0.9):
+            print 'calibrate height'
+            self.update( movePCMDCmd( True, 0, 0, 0, 30 ) )
         print 'end position',self.position
-        #self.update( cmd=movePCMDCmd( True, 0, 0, 0, 0 ) )
+        self.update( cmd=movePCMDCmd( True, 0, 0, 0, 0 ) )
 
-    def calibrate( self, dX, dY, timeout=5.0 ):
+    def calibrate( self, dX, dY, timeout=3.0 ):
 
         startTime = self.time
-        speed = 60
-        dP = [0]*2
-        dP[0] = dX+self.position[0] # x,y positions are negative
-        dP[1] = dY+self.position[1]
-        print 'startangle= ',self.angle[2]
-        rotation = np.arctan2(dP[0],dP[1])
+        speed = 75
+      
+        print 'start angle= ',self.angle[2]
+        rotation = np.arctan2(dX,dY)
         print 'rotation= ',rotation
         if(rotation+self.angle[2]>math.pi):
-            rotateAngle = abs(2*math.pi-rotation-self.angle[2])
+            rotateAngle = -2*math.pi+rotation+self.angle[2]
         elif(rotation+self.angle[2]<-math.pi):
-            rotateAngle = abs(2*math.pi+rotation+self.angle[2])
+            rotateAngle = 2*math.pi+rotation+self.angle[2]
         else:
             rotateAngle = self.angle[2]+rotation 
 
