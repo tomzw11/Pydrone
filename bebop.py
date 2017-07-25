@@ -239,9 +239,8 @@ class Bebop:
         while(self.time-startTime<timeout and droneSpeed>0.25):
             self.update( movePCMDCmd( True, self.speed[1]*50, self.speed[0]*50, 0, 0 ) )
             droneSpeed = self.speed[0]**2+self.speed[1]**2
-            # print 'droneSpeed', droneSpeed
-            # print self.speed
-        print 'landing postition',self.position
+
+        print 'landing position',self.position
         self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
 
     def moveX( self, dX, speed, timeout=3.0 ):
@@ -305,18 +304,54 @@ class Bebop:
 
         self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
 
-    def moveBy( self, dX, dY, timeout=6.0):
+    def moveBy( self, dX, dY, timeout=5.0):
         print 'move by ', dX, dY
-        print 'starting position',self.position
         startTime = self.time
-        self.calibrate(dX,dY)
-        print 'time',self.time
-        self.moveY(1,20)
-        while(self.time-startTime<timeout and self.altitude<0.9):
-            print 'calibrate height'
-            self.update( movePCMDCmd( True, 0, 0, 0, 30 ) )
-        print 'end position',self.position
+        startPosition = [0]*2
+        startPosition[0] = -self.position[1]
+        startPosition[1] = -self.position[0]
+        print 'starting position ',startPosition
+
+        targetPosition = [0]*2
+        currentSpeed = [0]*2
+        targetSpeed = [0]*2
+        inputSpeed = [0]*2
+        targetPosition[0] = startPosition[0]+dX
+        targetPosition[1] = startPosition[1]+dY
+        top_speed = 40
+        initial_distance = np.sqrt(abs(targetPosition[1]-startPosition[0])**2+abs(targetPosition[0]-startPosition[1])**2)
+
+        print 'tartgetPos x ', targetPosition[0], ' y ', targetPosition[1]
+
+        while(self.time-startTime<timeout):
+            distance = np.sqrt(abs(targetPosition[1]+self.position[0])**2+abs(targetPosition[0]+self.position[1])**2)
+            print 'distance ',distance
+            if(distance<0.2):
+                print 'arrived', distance
+                break
+            if(distance>initial_distance+2):
+                print 'drone out of path', distance
+                break
+
+            targetSpeed[0] = targetPosition[0]+self.position[1]
+            targetSpeed[1] = targetPosition[1]+self.position[0]
+            targetSpeed[0] = targetSpeed[0]/np.sqrt(targetSpeed[0]**2+targetSpeed[1]**2)
+            targetSpeed[1] = targetSpeed[1]/np.sqrt(targetSpeed[0]**2+targetSpeed[1]**2)
+            #print 'targetspeed x ',targetSpeed[0],' y ',targetSpeed[1]
+
+            currentSpeed[0] = -self.speed[1]/np.sqrt(self.speed[0]**2+self.speed[1]**2)
+            currentSpeed[1] = -self.speed[0]/np.sqrt(self.speed[0]**2+self.speed[1]**2)
+            #print 'currentspeed x ',currentSpeed[0], ' y ',currentSpeed[1]
+
+            inputSpeed[0] = targetSpeed[0]-currentSpeed[0]
+            inputSpeed[1] = targetSpeed[1]-currentSpeed[1]
+            #print 'inputSpeed x ',inputSpeed[0],' y ',inputSpeed[1]
+
+            self.update( movePCMDCmd( True, inputSpeed[0]*top_speed, inputSpeed[1]*top_speed, 0, 0 ) )
+
         self.update( cmd=movePCMDCmd( True, 0, 0, 0, 0 ) )
+        endPosition = self.position
+        print 'end position x ',-endPosition[1],' y ',-endPosition[0]
 
     def calibrate( self, dX, dY, timeout=3.0 ):
 
@@ -349,12 +384,12 @@ class Bebop:
             return
 
     def resetAngle( self, startAngle, timeout=3.0 ):
-        print 'calibrating angle...'
-        speed = 80
+        print 'reset angle...'
+        speed = 75
         assert self.time is not None
         startTime = self.time
         if abs(startAngle-self.angle[2])<0.1:
-            #print 'already calibrated'
+            print 'already calibrated'
             self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
         else:
             if self.angle[2] < 0:
@@ -362,14 +397,15 @@ class Bebop:
                 while abs(self.angle[2]-startAngle) > 0.1 and self.time-startTime < timeout:
                     self.update( movePCMDCmd( True, 0, 0, speed, 0 ) )
                 self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
+                print 'end angle= ',self.angle[2]
                 return
             else:
                 #print 'calibrate counterclockwise'
                 while abs(self.angle[2]-startAngle) > 0.1 and self.time-startTime < timeout:
                     self.update( movePCMDCmd( True, 0, 0, -speed, 0 ) )
                 self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
+                print 'end angle= ',self.angle[2]
                 return
-        self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
 
     def moveTo( self, lat, lon, altitude):
         print 'moving to position'
@@ -398,6 +434,3 @@ if __name__ == "__main__":
     drone = Bebop( metalog=metalog )
 
     print "Battery:", drone.battery
-
-# vim: expandtab sw=4 ts=4 
-

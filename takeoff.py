@@ -5,18 +5,19 @@ import math
 from bebop import *
 from apyros.manual import myKbhit, ManualControlException
 
-print 'Takeoff in 10 seconds'
-time.sleep(10)
+timeDelay = 5
+print 'Takeoff in %d seconds' % timeDelay
+time.sleep(timeDelay)
 drone = Bebop()
-drone.videoDisable() # disable video stream
 drone.moveCamera( tilt=-90, pan=0 )
 
 try:
 
 	drone.takeoff()
-	drone.moveBy(0,1)
+	drone.moveBy(0,2)
 	drone.stop()
-	drone.moveBy(0,-1)
+	drone.moveZ(1)
+	drone.moveBy(0,-2)
 	drone.land()
 
 except (ManualControlException,Exception), e:
