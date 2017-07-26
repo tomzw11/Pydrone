@@ -289,14 +289,14 @@ class Bebop:
         startTime = self.time
 
         if self.altitude < altitude:#going up 
-            while self.altitude < altitude and self.time-startTime < timeout:
+            while self.altitude < altitude and self.time-startTime < timeout and altitude>0:
                 self.update( movePCMDCmd( True, 0, 0, 0, speed ) )
                 print 'going up ', self.altitude, self.time-startTime
             self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
             return
 
         else:
-            while self.altitude > altitude and self.time-startTime < timeout:
+            while self.altitude > altitude and self.time-startTime < timeout and altitude>0:
                 self.update( movePCMDCmd( True, 0, 0, 0, -speed ) )
                 print 'going down ', self.altitude, self.time-startTime
             self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
@@ -325,7 +325,7 @@ class Bebop:
 
         while(self.time-startTime<timeout):
             distance = np.sqrt(abs(targetPosition[1]+self.position[0])**2+abs(targetPosition[0]+self.position[1])**2)
-            print 'distance ',distance
+            # print 'distance ',distance
             if(distance<0.2):
                 print 'arrived', distance
                 break
@@ -353,10 +353,12 @@ class Bebop:
         endPosition = self.position
         print 'end position x ',-endPosition[1],' y ',-endPosition[0]
 
-    def calibrate( self, dX, dY, timeout=3.0 ):
+    def calibrate( self, dX, dY, dZ, timeout=5.0 ):
 
         startTime = self.time
-        speed = 75
+        rotation_speed = 75
+
+        self.moveZ(dZ)
       
         print 'start angle= ',self.angle[2]
         rotation = np.arctan2(dX,dY)
@@ -371,14 +373,14 @@ class Bebop:
         if(rotation < 0):
             print 'counterclockwise', rotateAngle
             while abs(self.angle[2]-rotateAngle) > 0.1 and self.time-startTime < timeout:
-                self.update( movePCMDCmd( True, 0, 0, -speed, 0 ) )
+                self.update( movePCMDCmd( True, 0, 0, -rotation_speed, 0 ) )
             self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
             print 'end angle= ',self.angle[2]
             return
         else:
             print 'clockwise',rotateAngle
             while abs(self.angle[2]-rotateAngle) > 0.1 and self.time-startTime < timeout:
-                self.update( movePCMDCmd( True, 0, 0, speed, 0 ) )
+                self.update( movePCMDCmd( True, 0, 0, rotation_speed, 0 ) )
             self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
             print 'end angle= ',self.angle[2]
             return
