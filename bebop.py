@@ -304,7 +304,7 @@ class Bebop:
 
         self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
 
-    def moveBy( self, dX, dY, timeout=5.0):
+    def moveBy( self, dX, dY, timeout=8.0):
         print 'move by ', dX, dY
         startTime = self.time
         startPosition = [0]*2
@@ -353,12 +353,10 @@ class Bebop:
         endPosition = self.position
         print 'end position x ',-endPosition[1],' y ',-endPosition[0]
 
-    def calibrate( self, dX, dY, dZ, timeout=5.0 ):
+    def calibrate( self, dX, dY, timeout=3.0 ):
 
         startTime = self.time
         rotation_speed = 75
-
-        self.moveZ(dZ)
       
         print 'start angle= ',self.angle[2]
         rotation = np.arctan2(dX,dY)
@@ -385,9 +383,11 @@ class Bebop:
             print 'end angle= ',self.angle[2]
             return
 
-    def resetAngle( self, startAngle, timeout=3.0 ):
+    def resetPosition( self, startAngle, altitude, timeout=5.0 ):
         print 'reset angle...'
-        speed = 75
+        self.moveZ(altitude)
+
+        rotation_speed = 75
         assert self.time is not None
         startTime = self.time
         if abs(startAngle-self.angle[2])<0.1:
@@ -397,21 +397,79 @@ class Bebop:
             if self.angle[2] < 0:
                 #print 'calibrate clockwise'
                 while abs(self.angle[2]-startAngle) > 0.1 and self.time-startTime < timeout:
-                    self.update( movePCMDCmd( True, 0, 0, speed, 0 ) )
+                    self.update( movePCMDCmd( True, 0, 0, rotation_speed, 0 ) )
                 self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
                 print 'end angle= ',self.angle[2]
                 return
             else:
                 #print 'calibrate counterclockwise'
                 while abs(self.angle[2]-startAngle) > 0.1 and self.time-startTime < timeout:
-                    self.update( movePCMDCmd( True, 0, 0, -speed, 0 ) )
+                    self.update( movePCMDCmd( True, 0, 0, -rotation_speed, 0 ) )
                 self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
                 print 'end angle= ',self.angle[2]
                 return
 
-    def moveTo( self, lat, lon, altitude):
-        print 'moving to position'
-        self.update( cmd=moveToCmd( lat, lon, altitude) )
+    def moveTo( self, X, Y, Z, timeout=8.0):
+        print 'move to ', X, Y, Z
+        startTime = self.time
+        startPosition = [0]*3
+        startPosition[0] = -self.position[1]
+        startPosition[1] = -self.position[0]
+        startPosition[2] = -self.position[2]
+
+        print 'starting position ',startPosition
+
+        targetPosition = [0]*3
+        currentSpeed = [0]*3
+        targetSpeed = [0]*3
+        inputSpeed = [0]*3
+        targetPosition[0] = startPosition[0]+X
+        targetPosition[1] = startPosition[1]+Y
+        targetPosition[2] = startPosition[2]+Z
+
+
+        top_speed = 40
+        initial_distance = np.sqrt(abs(targetPosition[1]-startPosition[0])**2+ \
+            abs(targetPosition[0]-startPosition[1])**2+ \
+            abs(targetPosition[2]-startPosition[2])**2)
+
+        print 'tartgetPos x ', targetPosition[0], ' y ', targetPosition[1], ' z ', targetPosition[2]
+
+        while(self.time-startTime<timeout):
+            distance = np.sqrt(abs(targetPosition[1]+self.position[0])**2+ \
+                abs(targetPosition[0]+self.position[1])**2+ \
+                abs(targetPosition[2]+self.position[2]**2))
+            # print 'distance ',distance
+            if(distance<0.2):
+                print 'arrived', distance
+                break
+            if(distance>initial_distance+2):
+                print 'drone out of path', distance
+                break
+
+            targetSpeed[0] = targetPosition[0]+self.position[1]
+            targetSpeed[1] = targetPosition[1]+self.position[0]
+            targetspeed[2] = targetPosition[2]+self.position[2]
+            targetSpeed[0] = targetSpeed[0]/np.sqrt(targetSpeed[0]**2+targetSpeed[1]**2+targetSpeed[2]**2)
+            targetSpeed[1] = targetSpeed[1]/np.sqrt(targetSpeed[0]**2+targetSpeed[1]**2+targetSpeed[2]**2)
+            targetSpeed[2] = targetSpeed[2]/np.sqrt(targetSpeed[0]**2+targetSpeed[1]**2+targetSpeed[2]**2)
+            #print 'targetspeed x ',targetSpeed[0],' y ',targetSpeed[1]
+
+            currentSpeed[0] = -self.speed[1]/np.sqrt(self.speed[0]**2+self.speed[1]**2+self.speed[2]**2)
+            currentSpeed[1] = -self.speed[0]/np.sqrt(self.speed[0]**2+self.speed[1]**2+self.speed[2]**2)
+            currentSpeed[2] = -self.speed[2]/np.sqrt(self.speed[0]**2+self.speed[1]**2+self.speed[2]**2)
+            #print 'currentspeed x ',currentSpeed[0], ' y ',currentSpeed[1]
+
+            inputSpeed[0] = targetSpeed[0]-currentSpeed[0]
+            inputSpeed[1] = targetSpeed[1]-currentSpeed[1]
+            inputSpeed[2] = targetSpeed[2]-currentSpeed[2]
+            #print 'inputSpeed x ',inputSpeed[0],' y ',inputSpeed[1]
+
+            self.update( movePCMDCmd( True, inputSpeed[0]*top_speed, inputSpeed[1]*top_speed, 0, inputSpeed[2]*top_speed ) )
+
+        self.update( cmd=movePCMDCmd( True, 0, 0, 0, 0 ) )
+        endPosition = self.position
+        print 'end position x ',-endPosition[1],' y ',-endPosition[0],' z ',-endPosition[2]
     
     def moveToCancel( self ):
         self.update( cmd=cancelMoveToCmd() )
