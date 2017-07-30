@@ -14,10 +14,10 @@ drone.moveCamera( tilt=-90, pan=0 )
 try:
 
 	drone.takeoff()
-	drone.moveBy(0,2)
+	drone.moveTo(2,2,1)
 	drone.stop()
-	drone.moveZ(1)
-	drone.moveBy(0,-2)
+	drone.moveTo(0,0,1)
+	drone.stop()
 	drone.land()
 
 except (ManualControlException,Exception), e:

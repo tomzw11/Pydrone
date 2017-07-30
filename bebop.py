@@ -240,7 +240,7 @@ class Bebop:
             self.update( movePCMDCmd( True, self.speed[1]*50, self.speed[0]*50, 0, 0 ) )
             droneSpeed = self.speed[0]**2+self.speed[1]**2
 
-        print 'landing position',self.position
+        print 'stopping position', -self.position[1], -self.position[0], -self.position[2]
         self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
 
     def moveX( self, dX, speed, timeout=3.0 ):
@@ -305,6 +305,8 @@ class Bebop:
         self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
 
     def moveBy( self, dX, dY, timeout=8.0):
+        #TODO:modify targetSpeed so it doesn't use updated values.
+        
         print 'move by ', dX, dY
         startTime = self.time
         startPosition = [0]*2
@@ -409,7 +411,7 @@ class Bebop:
                 print 'end angle= ',self.angle[2]
                 return
 
-    def moveTo( self, X, Y, Z, timeout=8.0):
+    def moveTo( self, X, Y, Z, timeout=5.0):
         print 'move to ', X, Y, Z
         startTime = self.time
         startPosition = [0]*3
@@ -423,9 +425,9 @@ class Bebop:
         currentSpeed = [0]*3
         targetSpeed = [0]*3
         inputSpeed = [0]*3
-        targetPosition[0] = startPosition[0]+X
-        targetPosition[1] = startPosition[1]+Y
-        targetPosition[2] = startPosition[2]+Z
+        targetPosition[0] = X
+        targetPosition[1] = Y
+        targetPosition[2] = Z
 
 
         top_speed = 40
@@ -439,31 +441,34 @@ class Bebop:
             distance = np.sqrt(abs(targetPosition[1]+self.position[0])**2+ \
                 abs(targetPosition[0]+self.position[1])**2+ \
                 abs(targetPosition[2]+self.position[2]**2))
-            # print 'distance ',distance
-            if(distance<0.2):
+            # print 'flight distance ',distance
+            # print 'time ',self.time
+            if(distance<0.1):
                 print 'arrived', distance
                 break
             if(distance>initial_distance+2):
                 print 'drone out of path', distance
                 break
 
-            targetSpeed[0] = targetPosition[0]+self.position[1]
-            targetSpeed[1] = targetPosition[1]+self.position[0]
-            targetspeed[2] = targetPosition[2]+self.position[2]
-            targetSpeed[0] = targetSpeed[0]/np.sqrt(targetSpeed[0]**2+targetSpeed[1]**2+targetSpeed[2]**2)
-            targetSpeed[1] = targetSpeed[1]/np.sqrt(targetSpeed[0]**2+targetSpeed[1]**2+targetSpeed[2]**2)
-            targetSpeed[2] = targetSpeed[2]/np.sqrt(targetSpeed[0]**2+targetSpeed[1]**2+targetSpeed[2]**2)
-            #print 'targetspeed x ',targetSpeed[0],' y ',targetSpeed[1]
+            targetSpeed_X = targetPosition[0]+self.position[1]
+            targetSpeed_Y = targetPosition[1]+self.position[0]
+            targetSpeed_Z = targetPosition[2]+self.position[2]
+            targetSpeed_norm = np.sqrt(targetSpeed_X**2+targetSpeed_Y**2+targetSpeed_Z**2)
+
+            targetSpeed[0] = targetSpeed_X/targetSpeed_norm
+            targetSpeed[1] = targetSpeed_Y/targetSpeed_norm
+            targetSpeed[2] = targetSpeed_Z/targetSpeed_norm
+            #print 'targetspeed x ',targetSpeed[0],' y ',targetSpeed[1], ' z ', targetSpeed[2]
 
             currentSpeed[0] = -self.speed[1]/np.sqrt(self.speed[0]**2+self.speed[1]**2+self.speed[2]**2)
             currentSpeed[1] = -self.speed[0]/np.sqrt(self.speed[0]**2+self.speed[1]**2+self.speed[2]**2)
             currentSpeed[2] = -self.speed[2]/np.sqrt(self.speed[0]**2+self.speed[1]**2+self.speed[2]**2)
-            #print 'currentspeed x ',currentSpeed[0], ' y ',currentSpeed[1]
+            #print 'currentspeed x ',currentSpeed[0], ' y ',currentSpeed[1], ' z ', currentSpeed[2]
 
             inputSpeed[0] = targetSpeed[0]-currentSpeed[0]
             inputSpeed[1] = targetSpeed[1]-currentSpeed[1]
             inputSpeed[2] = targetSpeed[2]-currentSpeed[2]
-            #print 'inputSpeed x ',inputSpeed[0],' y ',inputSpeed[1]
+            #print 'inputSpeed x ',inputSpeed[0],' y ',inputSpeed[1], ' z ', inputSpeed[2]
 
             self.update( movePCMDCmd( True, inputSpeed[0]*top_speed, inputSpeed[1]*top_speed, 0, inputSpeed[2]*top_speed ) )
 
