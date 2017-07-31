@@ -214,6 +214,7 @@ class Bebop:
    
     def takePicture( self ):
         self.update( cmd=takePictureCmd() )
+        print 'picture taken'
 
     def videoEnable( self ):
         "enable video stream"
@@ -306,7 +307,7 @@ class Bebop:
 
     def moveBy( self, dX, dY, timeout=8.0):
         #TODO:modify targetSpeed so it doesn't use updated values.
-        
+
         print 'move by ', dX, dY
         startTime = self.time
         startPosition = [0]*2
@@ -411,15 +412,17 @@ class Bebop:
                 print 'end angle= ',self.angle[2]
                 return
 
-    def moveTo( self, X, Y, Z, timeout=5.0):
+    def moveTo( self, X, Y, Z, timeout=7.0):
         print 'move to ', X, Y, Z
         startTime = self.time
         startPosition = [0]*3
+        currentSpeed_norm = 0
+        targetSpeed_norm = 0
         startPosition[0] = -self.position[1]
         startPosition[1] = -self.position[0]
         startPosition[2] = -self.position[2]
 
-        print 'starting position ',startPosition
+        print 'starting position x ', startPosition[0], ' y ', startPosition[1], ' z ', startPosition[2]
 
         targetPosition = [0]*3
         currentSpeed = [0]*3
@@ -428,7 +431,6 @@ class Bebop:
         targetPosition[0] = X
         targetPosition[1] = Y
         targetPosition[2] = Z
-
 
         top_speed = 40
         initial_distance = np.sqrt(abs(targetPosition[1]-startPosition[0])**2+ \
@@ -440,10 +442,11 @@ class Bebop:
         while(self.time-startTime<timeout):
             distance = np.sqrt(abs(targetPosition[1]+self.position[0])**2+ \
                 abs(targetPosition[0]+self.position[1])**2+ \
-                abs(targetPosition[2]+self.position[2]**2))
+                abs(targetPosition[2]+self.position[2])**2)
             # print 'flight distance ',distance
             # print 'time ',self.time
             if(distance<0.1):
+                self.takePicture();
                 print 'arrived', distance
                 break
             if(distance>initial_distance+2):
@@ -460,9 +463,10 @@ class Bebop:
             targetSpeed[2] = targetSpeed_Z/targetSpeed_norm
             #print 'targetspeed x ',targetSpeed[0],' y ',targetSpeed[1], ' z ', targetSpeed[2]
 
-            currentSpeed[0] = -self.speed[1]/np.sqrt(self.speed[0]**2+self.speed[1]**2+self.speed[2]**2)
-            currentSpeed[1] = -self.speed[0]/np.sqrt(self.speed[0]**2+self.speed[1]**2+self.speed[2]**2)
-            currentSpeed[2] = -self.speed[2]/np.sqrt(self.speed[0]**2+self.speed[1]**2+self.speed[2]**2)
+            currentSpeed_norm = np.sqrt(self.speed[0]**2+self.speed[1]**2+self.speed[2]**2)
+            currentSpeed[0] = -self.speed[1]/currentSpeed_norm
+            currentSpeed[1] = -self.speed[0]/currentSpeed_norm
+            currentSpeed[2] = -self.speed[2]/currentSpeed_norm
             #print 'currentspeed x ',currentSpeed[0], ' y ',currentSpeed[1], ' z ', currentSpeed[2]
 
             inputSpeed[0] = targetSpeed[0]-currentSpeed[0]

@@ -14,9 +14,7 @@ drone.moveCamera( tilt=-90, pan=0 )
 try:
 
 	drone.takeoff()
-	drone.moveTo(2,2,1)
-	drone.stop()
-	drone.moveTo(0,0,1)
+	drone.moveTo(-1,-1,1)
 	drone.stop()
 	drone.land()
 
