@@ -8,9 +8,18 @@ from apyros.manual import myKbhit, ManualControlException
 timeDelay = 5
 print 'Takeoff in %d seconds' % timeDelay
 time.sleep(timeDelay)
-height = 4
-x_cor = 3.36
-y_cor = 1.2
+root_height = 1
+x_cor = 0.42*root_height
+y_cor = 0.15*root_height
+# level 1 first/second/third/fourth quadrant.
+level1 = [\
+[0.42*root_height,0.15*root_height,root_height/2],\
+[-0.42*root_height,0.15*root_height,root_height/2],\
+[-0.42*root_height,-0.42*root_height,root_height/2],\
+[0.42*root_height,-0.42*root_height,root_height/2]]
+
+# level 2
+
 drone = Bebop()
 
 try:

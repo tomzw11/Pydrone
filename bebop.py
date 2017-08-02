@@ -237,7 +237,8 @@ class Bebop:
             self.update( movePCMDCmd( True, self.speed[1]*50, self.speed[0]*50, 0, -self.speed[2]*50 ) )
             droneSpeed = self.speed[0]**2+self.speed[1]**2+self.speed[2]**2
 
-        print 'stopping position', -self.position[1], -self.position[0], -self.position[2]
+        print 'stopping position ', -self.position[1], -self.position[0], -self.position[2]
+        print 'droneSpeed ',droneSpeed
         self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
 
     def moveX( self, dX, speed, timeout=3.0 ):
@@ -383,9 +384,9 @@ class Bebop:
             print 'end angle= ',self.angle[2]
             return
 
-    def resetPosition( self, startAngle, altitude, timeout=5.0 ):
+    def resetPosition( self, startAngle, timeout=3.0 ):
         print 'reset angle...'
-        self.moveZ(altitude)
+        # self.moveZ(altitude)
 
         rotation_speed = 75
         assert self.time is not None
@@ -395,14 +396,14 @@ class Bebop:
             self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
         else:
             if self.angle[2] < 0:
-                #print 'calibrate clockwise'
+                print 'calibrate clockwise'
                 while abs(self.angle[2]-startAngle) > 0.1 and self.time-startTime < timeout:
                     self.update( movePCMDCmd( True, 0, 0, rotation_speed, 0 ) )
                 self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
                 print 'end angle= ',self.angle[2]
                 return
             else:
-                #print 'calibrate counterclockwise'
+                print 'calibrate counterclockwise'
                 while abs(self.angle[2]-startAngle) > 0.1 and self.time-startTime < timeout:
                     self.update( movePCMDCmd( True, 0, 0, -rotation_speed, 0 ) )
                 self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
@@ -478,21 +479,6 @@ class Bebop:
             inputSpeed[0] = tempSpeed[0]/inputSpeed_norm
             inputSpeed[1] = tempSpeed[1]/inputSpeed_norm
             inputSpeed[2] = tempSpeed[2]/inputSpeed_norm
-
-            # if(inputSpeed[0] > 99): 
-            #     inputSpeed[0] = top_speed
-            # elif(inputSpeed[0] < -99):
-            #     inputSpeed[0] = -top_speed
-
-            # if(inputSpeed[1] > 99): 
-            #     inputSpeed[1] = top_speed
-            # elif(inputSpeed[1] < -99):
-            #     inputSpeed[1] = -top_speed
-
-            # if(inputSpeed[2] > 99): 
-            #     inputSpeed[2] = top_speed
-            # elif(inputSpeed[2] < -99):
-            #     inputSpeed[2] = -top_speed
 
             print 'inputSpeed x ',inputSpeed[0]*top_speed,' y ',inputSpeed[1]*top_speed, ' z ', inputSpeed[2]*top_speed
 
