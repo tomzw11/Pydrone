@@ -161,6 +161,7 @@ class Bebop:
     def takeoff( self ):
        
         print "Taking off ...",
+        self.update( videoRecordingCmd( on=True ) )
         self.update( cmd=takeoffCmd() )
         prevState = None
         for i in xrange(100):
@@ -278,7 +279,7 @@ class Bebop:
                 self.update( movePCMDCmd( True, 0, speed, 0, 0 ) )
         self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
 
-    def moveZ( self, altitude, timeout=3.0 ):
+    def moveZ( self, altitude, timeout=5.0 ):
         speed = 50 #in percentage
         assert self.time is not None
         assert self.altitude is not None
@@ -408,7 +409,7 @@ class Bebop:
                 print 'end angle= ',self.angle[2]
                 return
 
-    def moveTo( self, X, Y, Z, timeout=5.0):
+    def moveTo( self, X, Y, Z, timeout=8.0 ):
         print 'move to ', X, Y, Z
         startTime = self.time
         startPosition = [0]*3
@@ -424,11 +425,12 @@ class Bebop:
         currentSpeed = [0]*3
         targetSpeed = [0]*3
         inputSpeed = [0]*3
+        tempSpeed = [0]*3
         targetPosition[0] = X
         targetPosition[1] = Y
         targetPosition[2] = Z
 
-        top_speed = 40
+        top_speed = 50
         initial_distance = np.sqrt(abs(targetPosition[1]-startPosition[0])**2+ \
             abs(targetPosition[0]-startPosition[1])**2+ \
             abs(targetPosition[2]-startPosition[2])**2)
@@ -467,10 +469,32 @@ class Bebop:
             currentSpeed[2] = -self.speed[2]/currentSpeed_norm
             #print 'currentspeed x ',currentSpeed[0], ' y ',currentSpeed[1], ' z ', currentSpeed[2]
 
-            inputSpeed[0] = targetSpeed[0]-currentSpeed[0]
-            inputSpeed[1] = targetSpeed[1]-currentSpeed[1]
-            inputSpeed[2] = targetSpeed[2]-currentSpeed[2]
-            print 'inputSpeed x ',inputSpeed[0],' y ',inputSpeed[1], ' z ', inputSpeed[2]
+            tempSpeed[0] = (targetSpeed[0]-currentSpeed[0])
+            tempSpeed[1] = (targetSpeed[1]-currentSpeed[1])
+            tempSpeed[2] = (targetSpeed[2]-currentSpeed[2])
+
+            inputSpeed_norm = np.sqrt(tempSpeed[0]**2+tempSpeed[1]**2+tempSpeed[2]**2)
+
+            inputSpeed[0] = tempSpeed[0]/inputSpeed_norm
+            inputSpeed[1] = tempSpeed[1]/inputSpeed_norm
+            inputSpeed[2] = tempSpeed[2]/inputSpeed_norm
+
+            # if(inputSpeed[0] > 99): 
+            #     inputSpeed[0] = top_speed
+            # elif(inputSpeed[0] < -99):
+            #     inputSpeed[0] = -top_speed
+
+            # if(inputSpeed[1] > 99): 
+            #     inputSpeed[1] = top_speed
+            # elif(inputSpeed[1] < -99):
+            #     inputSpeed[1] = -top_speed
+
+            # if(inputSpeed[2] > 99): 
+            #     inputSpeed[2] = top_speed
+            # elif(inputSpeed[2] < -99):
+            #     inputSpeed[2] = -top_speed
+
+            print 'inputSpeed x ',inputSpeed[0]*top_speed,' y ',inputSpeed[1]*top_speed, ' z ', inputSpeed[2]*top_speed
 
             self.update( movePCMDCmd( True, inputSpeed[0]*top_speed, inputSpeed[1]*top_speed, 0, inputSpeed[2]*top_speed ) )
 

@@ -17,7 +17,9 @@ from apyros.manual import myKbhit, ManualControlException
 
 TMP_VIDEO_FILE = "video.bin"
 
-def videoCallback( frame, robot=None, debug=False ):
+def videoCallback( frame, drone=None, debug=False ):
+    print 'videocbk'
+    print frame
     if frame:
         print "Video", len(frame)
         # workaround for a single frame
@@ -69,17 +71,14 @@ def demo0( drone ):
 
 def demo( drone ):
     print "demo"
-    print "Follow 2-color cap ..."
     drone.videoCbk = videoCallback
     drone.videoEnable()
     try:
-        # drone.trim()
-        # drone.takeoff()
-        # drone.flyToAltitude( 1.5 )
-        for i in xrange(100):
-            print i,
-            drone.update( cmd=None )
-        # drone.land()
+        drone.takeoff()
+        drone.wait(5)
+        drone.land()
+        
+
     except ManualControlException, e:
         print
         print "ManualControlException"
@@ -98,7 +97,7 @@ if __name__ == "__main__":
         disableAsserts()
 
     drone = Bebop( metalog=metalog )
-    demo0( drone )
+    demo( drone )
     print "Battery:", drone.battery
 
 # vim: expandtab sw=4 ts=4 
