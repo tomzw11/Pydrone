@@ -38,13 +38,14 @@ try:
 				print filename
 				ftp.retrbinary("RETR " + filename ,open(filename, 'wb').write)
 				frame = cv2.imread(filename)
+				cv2.imshow(frame)
 				if findColor(frame)==False:
 					print "no object found"
-					drone.update( cmd=movePCMDCmd( True, 0, 10, 0, 0 ) )
+					drone.update( cmd=movePCMDCmd( True, 0, 5, 0, 0 ) )
 				else:
 					print "object found"
 					drone.hover()
-					drone.flyToAltitude(1.5,2)
+					# drone.flyToAltitude(1.5,2)
 					drone.wait(2)
 					drone.land()
 					break
@@ -60,8 +61,7 @@ try:
 	drone.land()
    
 except (ManualControlException,Exception), e:
-    print
-    print "Emergency Landing"
+	print "Emergency Landing"
 	ftp.quit()
 	drone.land()
 
