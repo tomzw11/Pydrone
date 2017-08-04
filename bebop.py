@@ -431,7 +431,7 @@ class Bebop:
         targetPosition[1] = Y
         targetPosition[2] = Z
 
-        top_speed = 50
+        top_speed = 40
         initial_distance = np.sqrt(abs(targetPosition[1]-startPosition[0])**2+ \
             abs(targetPosition[0]-startPosition[1])**2+ \
             abs(targetPosition[2]-startPosition[2])**2)
@@ -464,6 +464,9 @@ class Bebop:
             # print 'targetSpeed x ',targetSpeed[0],' y ',targetSpeed[1], ' z ', targetSpeed[2]
 
             currentSpeed_norm = np.sqrt(self.speed[0]**2+self.speed[1]**2+self.speed[2]**2)
+            if currentSpeed_norm == 0:
+                currentSpeed_norm = 1
+            print 'currentspeednorm', currentSpeed_norm
 
             currentSpeed[0] = -self.speed[1]/currentSpeed_norm
             currentSpeed[1] = -self.speed[0]/currentSpeed_norm

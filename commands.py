@@ -60,8 +60,10 @@ def takePictureCmd():
     # ARCOMMANDS_ID_PROJECT_ARDRONE3 = 1,
     # ARCOMMANDS_ID_ARDRONE3_CLASS_MEDIARECORD = 7,
     # ARCOMMANDS_ID_ARDRONE3_MEDIARECORD_CMD_PICTURE = 0,
+    # ARCOMMANDS_ID_ARDRONE3_MEDIARECORD_CMD_PICTURE_V2 = 2,
+
     massStorageId = 0 # internal ??
-    return struct.pack("BBHB", 1, 7, 0, massStorageId)
+    return struct.pack("BBHB", 1, 7, 2, massStorageId)
 
 
 def videoRecordingCmd( on=True ):
