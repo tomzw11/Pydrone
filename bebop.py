@@ -172,16 +172,28 @@ class Bebop:
             prevState = self.flyingState
         print "FLYING"
         
-    def land( self ):
+    def land2( self ):
         speed = 75
         print 'landing'
-        while self.altitude > 1 :
+        while self.altitude > 0.3 :
             self.update( movePCMDCmd( True, 0, 0, 0, -speed ) )
-
         self.update( cmd=landCmd() )
-        if(self.flyingState==0):
-            self.update( videoRecordingCmd( on=False ) )
-            print 'landed'
+        while(self.flyingState != 0):
+            self.update( cmd=None)
+        print 'landed'
+
+
+    def land( self ):
+        print "Landing ..."
+        landing_speed = 75
+        self.update( videoRecordingCmd( on=False ) )
+        while self.altitude > 0.3 :
+            self.update( movePCMDCmd( True, 0, 0, 0, -speed ) )
+        self.update( cmd=landCmd() )
+        while(self.flyingState != 0):
+            self.update( cmd=None )
+        print "LANDED"
+
 
     def hover( self, timeout ):
         startTime = self.time
@@ -251,14 +263,7 @@ class Bebop:
         
         while abs(self.position[1]-startPos) < dX and self.time-startTime < timeout:
 
-            if(self.speed[0] > 0.2):
-                self.update( movePCMDCmd( True, speed, -10, 0, 0 ) )
-            elif(self.speed[0] < -0.2):
-                self.update( movePCMDCmd( True, speed, 10, 0, 0 ) )
-            else:
                 self.update( movePCMDCmd( True, speed, 0, 0, 0 ) )
-            print 'speed ',self.speed
-            print 'position ',self.position
         
         self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
 
@@ -272,12 +277,9 @@ class Bebop:
         
         while abs(self.position[0]-startPos) < dY and self.time-startTime < timeout:
 
-            if(self.speed[1] > 0.2):
-                self.update( movePCMDCmd( True, -10, speed, 0, 0 ) )
-            elif(self.speed[1] < -0.2):
-                self.update( movePCMDCmd( True, 10, speed, 0, 0 ) )
-            else:
-                self.update( movePCMDCmd( True, 0, speed, 0, 0 ) )
+            self.update( movePCMDCmd( True, speed, 0, 0, 0 ) )
+
+
         self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
 
     def moveZ( self, altitude, timeout=5.0 ):
@@ -302,7 +304,7 @@ class Bebop:
 
         self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
 
-    def moveBy( self, dX, dY, timeout=8.0):
+    def moveBy( self, dX, dY, timeout=5.0):
         # outdated function.
         # TODO: modify targetSpeed so it doesn't use updated values.
 
@@ -461,12 +463,12 @@ class Bebop:
             targetSpeed[0] = targetSpeed_X/targetSpeed_norm
             targetSpeed[1] = targetSpeed_Y/targetSpeed_norm
             targetSpeed[2] = targetSpeed_Z/targetSpeed_norm
-            # print 'targetSpeed x ',targetSpeed[0],' y ',targetSpeed[1], ' z ', targetSpeed[2]
+            print 'targetSpeed x ',targetSpeed[0],' y ',targetSpeed[1], ' z ', targetSpeed[2]
 
             currentSpeed_norm = np.sqrt(self.speed[0]**2+self.speed[1]**2+self.speed[2]**2)
-            if currentSpeed_norm == 0:
-                currentSpeed_norm = 1
-            print 'currentspeednorm', currentSpeed_norm
+            # if currentSpeed_norm == 0:
+            #     currentSpeed_norm = 1
+            # print 'currentspeednorm', currentSpeed_norm
 
             currentSpeed[0] = -self.speed[1]/currentSpeed_norm
             currentSpeed[1] = -self.speed[0]/currentSpeed_norm
@@ -484,7 +486,7 @@ class Bebop:
             inputSpeed[1] = tempSpeed[1]/inputSpeed_norm
             inputSpeed[2] = tempSpeed[2]/inputSpeed_norm
 
-            # print 'inputSpeed x ',inputSpeed[0]*top_speed,' y ',inputSpeed[1]*top_speed, ' z ', inputSpeed[2]*top_speed
+            print 'inputSpeed x ',inputSpeed[0]*top_speed,' y ',inputSpeed[1]*top_speed, ' z ', inputSpeed[2]*top_speed
 
             self.update( movePCMDCmd( True, inputSpeed[0]*top_speed, inputSpeed[1]*top_speed, 0, inputSpeed[2]*top_speed ) )
 

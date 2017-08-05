@@ -24,15 +24,17 @@ drone = Bebop()
 
 try:
 
-	# drone.takeoff()
+	drone.takeoff()
 	drone.moveCamera( tilt=-90, pan=0 )
-	#drone.moveTo(1,-1,1)
-	drone.takePicture()
+
+	# drone.wait(2)
+	# drone.moveY(1,10)
+	# drone.takePicture()
 	# drone.stop()
 	# drone.moveTo(x_cor,y_cor,root_height/2)
 	# drone.moveTo(x_cor,y_cor,height/2)
 	# drone.stop()
-	# drone.land()
+	drone.land()
 
 except (ManualControlException,Exception), e:
 
