@@ -71,20 +71,23 @@ def demo0( drone ):
 
 def demo( drone ):
     print "demo"
+    drone.videoEnable()
+
     drone.videoCbk = videoCallback
     drone.videoEnable()
-    try:
-        drone.takeoff()
-        drone.wait(5)
-        drone.land()
+    drone.wait(10)
+    # try:
+    #     drone.takeoff()
+    #     drone.wait(5)
+    #     drone.land()
         
 
-    except ManualControlException, e:
-        print
-        print "ManualControlException"
-        if drone.flyingState is None or drone.flyingState == 1: # taking off
-            drone.emergency()
-        drone.land()
+    # except ManualControlException, e:
+    #     print
+    #     print "ManualControlException"
+    #     if drone.flyingState is None or drone.flyingState == 1: # taking off
+    #         drone.emergency()
+    #     drone.land()
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -97,8 +100,8 @@ if __name__ == "__main__":
         disableAsserts()
 
     drone = Bebop( metalog=metalog )
-    demo( drone )
-    print "Battery:", drone.battery
+    print 'create drone'
+    demo(drone)
 
 # vim: expandtab sw=4 ts=4 
 

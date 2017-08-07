@@ -57,7 +57,7 @@ class Bebop:
         self.position = (0,0,0)
         self.speed = (0,0,0)
         self.positionGPS = None
-        self.cameraTilt = 0
+        self.cameraTilt = -90
         self.cameraPan = 0
         self.lastImageResult = None
         self.navigateHomeState = None
@@ -165,7 +165,6 @@ class Bebop:
         self.update( cmd=takeoffCmd() )
         prevState = None
         for i in xrange(100):
-            #print i,
             self.update( cmd=None )
             if self.flyingState != 1 and prevState == 1:
                 break
@@ -173,10 +172,10 @@ class Bebop:
         print "FLYING"
         
     def land2( self ):
-        speed = 75
+        landing_speed = 75
         print 'landing'
         while self.altitude > 0.3 :
-            self.update( movePCMDCmd( True, 0, 0, 0, -speed ) )
+            self.update( movePCMDCmd( True, 0, 0, 0, -landing_speed ) )
         self.update( cmd=landCmd() )
         while(self.flyingState != 0):
             self.update( cmd=None)
@@ -188,7 +187,7 @@ class Bebop:
         landing_speed = 75
         self.update( videoRecordingCmd( on=False ) )
         while self.altitude > 0.3 :
-            self.update( movePCMDCmd( True, 0, 0, 0, -speed ) )
+            self.update( movePCMDCmd( True, 0, 0, 0, -landing_speed ) )
         self.update( cmd=landCmd() )
         while(self.flyingState != 0):
             self.update( cmd=None )
@@ -259,12 +258,17 @@ class Bebop:
             speed = -speed
         assert self.time is not None
         startTime = self.time
-        startPos = self.position[1]
+        startPos = self.position[0]
         
-        while abs(self.position[1]-startPos) < dX and self.time-startTime < timeout:
+        while abs(self.position[0]-startPos) < abs(dX) and self.time-startTime < timeout:
 
                 self.update( movePCMDCmd( True, speed, 0, 0, 0 ) )
-        
+                # print 'current position x axis', -self.position[0]
+                print 'position ', -self.position[0], self.position[1], -self.position[2]
+                print 'current speed x',-self.speed[0]
+
+
+
         self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
 
     def moveY( self, dY, speed, timeout=3.0 ):
@@ -273,12 +277,15 @@ class Bebop:
             speed = -speed
         assert self.time is not None
         startTime = self.time
-        startPos = self.position[0]
+        startY = self.position[1]
         
-        while abs(self.position[0]-startPos) < dY and self.time-startTime < timeout:
+        while abs(self.position[1]-startY) < abs(dY) and self.time-startTime < timeout:
 
-            self.update( movePCMDCmd( True, speed, 0, 0, 0 ) )
-
+            self.update( movePCMDCmd( True, 0, speed, 0, 0 ) )
+            currentY = self.position[1]
+            print 'current position y axis',currentY
+            print 'current speed y',self.speed[1]
+        print 'end position ', -self.position[0], self.position[1], -self.position[2]
 
         self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
 
@@ -414,12 +421,13 @@ class Bebop:
 
     def moveTo( self, X, Y, Z, timeout=8.0 ):
         print 'move to ', X, Y, Z
+        update_count = 0
         startTime = self.time
         startPosition = [0]*3
         currentSpeed_norm = 0
         targetSpeed_norm = 0
-        startPosition[0] = -self.position[1]
-        startPosition[1] = -self.position[0]
+        startPosition[0] = -self.position[0]
+        startPosition[1] = self.position[1]
         startPosition[2] = -self.position[2]
 
         print 'starting position x ', startPosition[0], ' y ', startPosition[1], ' z ', startPosition[2]
@@ -434,15 +442,18 @@ class Bebop:
         targetPosition[2] = Z
 
         top_speed = 40
-        initial_distance = np.sqrt(abs(targetPosition[1]-startPosition[0])**2+ \
-            abs(targetPosition[0]-startPosition[1])**2+ \
-            abs(targetPosition[2]-startPosition[2])**2)
+        initial_distance = np.sqrt(abs(targetPosition[0]+startPosition[0])**2+ \
+            abs(targetPosition[1]-startPosition[1])**2+ \
+            abs(targetPosition[2]+startPosition[2])**2)
+        print 'initial distance', initial_distance
 
         print 'tartgetPos x ', targetPosition[0], ' y ', targetPosition[1], ' z ', targetPosition[2]
 
         while(self.time-startTime<timeout):
-            distance = np.sqrt(abs(targetPosition[1]+self.position[0])**2+ \
-                abs(targetPosition[0]+self.position[1])**2+ \
+            print 'current position x ',-self.position[0],' y ',self.position[1],' z ',-self.position[2]
+            # update_count = update_count+1
+            distance = np.sqrt(abs(targetPosition[0]+self.position[0])**2+ \
+                abs(targetPosition[1]-self.position[1])**2+ \
                 abs(targetPosition[2]+self.position[2])**2)
             # print 'flight distance ',distance
             # print 'time ',self.time
@@ -451,12 +462,12 @@ class Bebop:
                 # self.takePicture();
                 print 'arrived', distance
                 break
-            if(distance>initial_distance+2):
+            if(distance>initial_distance+1):
                 print 'drone out of path', distance
                 break
 
-            targetSpeed_X = targetPosition[0]+self.position[1]
-            targetSpeed_Y = targetPosition[1]+self.position[0]
+            targetSpeed_X = targetPosition[0]+self.position[0]
+            targetSpeed_Y = targetPosition[1]-self.position[1]
             targetSpeed_Z = targetPosition[2]+self.position[2]
             targetSpeed_norm = np.sqrt(targetSpeed_X**2+targetSpeed_Y**2+targetSpeed_Z**2)
 
@@ -471,7 +482,7 @@ class Bebop:
             # print 'currentspeednorm', currentSpeed_norm
 
             currentSpeed[0] = -self.speed[1]/currentSpeed_norm
-            currentSpeed[1] = -self.speed[0]/currentSpeed_norm
+            currentSpeed[1] = self.speed[0]/currentSpeed_norm
             currentSpeed[2] = -self.speed[2]/currentSpeed_norm
             # print 'currentSpeed x ',currentSpeed[0], ' y ',currentSpeed[1], ' z ', currentSpeed[2]
 
@@ -486,13 +497,14 @@ class Bebop:
             inputSpeed[1] = tempSpeed[1]/inputSpeed_norm
             inputSpeed[2] = tempSpeed[2]/inputSpeed_norm
 
-            print 'inputSpeed x ',inputSpeed[0]*top_speed,' y ',inputSpeed[1]*top_speed, ' z ', inputSpeed[2]*top_speed
+            # print 'inputSpeed x ',inputSpeed[0]*top_speed,' y ',inputSpeed[1]*top_speed, ' z ', inputSpeed[2]*top_speed
 
             self.update( movePCMDCmd( True, inputSpeed[0]*top_speed, inputSpeed[1]*top_speed, 0, inputSpeed[2]*top_speed ) )
 
         self.update( cmd=movePCMDCmd( True, 0, 0, 0, 0 ) )
         endPosition = self.position
-        print 'end position x ',-endPosition[1],' y ',-endPosition[0],' z ',-endPosition[2]
+        # print 'update count ', update_count
+        print 'end position x ',-endPosition[0],' y ',endPosition[1],' z ',-endPosition[2]
 
     def moveTo2( self, X, Y, Z, timeout=5.0 ):
         print 'move to2 ', X, Y, Z

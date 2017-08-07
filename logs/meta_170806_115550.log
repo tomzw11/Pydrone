@@ -1,0 +1,5 @@
+['demo.py', 'demo']
+navdata: logs/navdata_170806_115550.bin
+cmd: logs/cmd_170806_115550.bin
+console: logs/console_170806_115550.txt
+now: datetime.datetime(2017, 8, 6, 11, 55, 50, 600104)

@@ -1,0 +1,5 @@
+['takeoff.py']
+navdata: logs/navdata_170806_153413.bin
+cmd: logs/cmd_170806_153413.bin
+console: logs/console_170806_153413.txt
+now: datetime.datetime(2017, 8, 6, 15, 34, 13, 559410)
