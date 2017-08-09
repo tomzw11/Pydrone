@@ -26,9 +26,7 @@ try:
 	# print 'r1' , drone.cameraTilt, drone.cameraPan
 	# drone.moveCamera( tilt=-90, pan=0 )
 	# print 'r2 ', drone.cameraTilt, drone.cameraPan
-	drone.moveTo(0,-1,1)
-	# drone.moveX(-1,30)
-	# drone.moveX(-2,30)
+	drone.moveY(1,30)
 	# drone.wait(1)
 	# drone.moveY(1,10)
 	# print 'r3 ', drone.cameraTilt, drone.cameraPan

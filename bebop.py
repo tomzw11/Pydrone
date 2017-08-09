@@ -258,9 +258,9 @@ class Bebop:
             speed = -speed
         assert self.time is not None
         startTime = self.time
-        startPos = self.position[0]
+        startPos = -self.position[0]
         
-        while abs(self.position[0]-startPos) < abs(dX) and self.time-startTime < timeout:
+        while abs(self.position[0]+startPos) < abs(dX) and self.time-startTime < timeout:
 
                 self.update( movePCMDCmd( True, speed, 0, 0, 0 ) )
                 # print 'current position x axis', -self.position[0]
