@@ -172,25 +172,24 @@ class Bebop:
         print "FLYING"
         
     def land2( self ):
+        print "Landing ..."
         landing_speed = 75
-        print 'landing'
-        while self.altitude > 0.3 :
+        self.update( videoRecordingCmd( on=False ) )
+        while self.altitude > 0.1 :
             self.update( movePCMDCmd( True, 0, 0, 0, -landing_speed ) )
-        self.update( cmd=landCmd() )
-        while(self.flyingState != 0):
-            self.update( cmd=None)
-        print 'landed'
+        self.update( cmd=emergencyCmd() )
 
+        if(self.flyingState == 0):
+            print "LANDED"
 
     def land( self ):
         print "Landing ..."
         landing_speed = 75
         self.update( videoRecordingCmd( on=False ) )
-        while self.altitude > 0.3 :
+        while self.altitude > 0.1 :
             self.update( movePCMDCmd( True, 0, 0, 0, -landing_speed ) )
-        self.update( cmd=landCmd() )
         while(self.flyingState != 0):
-            self.update( cmd=None )
+            self.update( cmd=landCmd() )
         print "LANDED"
 
 
@@ -263,12 +262,8 @@ class Bebop:
         while abs(self.position[0]+startPos) < abs(dX) and self.time-startTime < timeout:
 
                 self.update( movePCMDCmd( True, speed, 0, 0, 0 ) )
-                # print 'current position x axis', -self.position[0]
-                print 'position ', -self.position[0], self.position[1], -self.position[2]
+                print 'position ', self.position[0], self.position[1], self.position[2]
                 print 'current speed x',-self.speed[0]
-
-
-
         self.update( movePCMDCmd( True, 0, 0, 0, 0 ) )
 
     def moveY( self, dY, speed, timeout=3.0 ):

@@ -1,10 +1,7 @@
 import matplotlib.pyplot as plt 
 import matplotlib.patches as patches
 
-
-
 def route(root):
-
 
 	root_height = root[2]
 
@@ -18,7 +15,9 @@ def route(root):
 
 if __name__ == "__main__":
 
+	meter_to_feet = 3.28
 	root = [0,0,16*1]
+	print 'root',root,'\n'
 
 	level1 = route(root)
 	print 'level 1 \n'
@@ -31,9 +30,9 @@ if __name__ == "__main__":
 	level2 = [[0]*3]*4
 
 	for x in xrange(4):
-
 		level2[x] = route(level1[x])
-		print level2[x],'\n'
+		for y in xrange(4):
+			print 'level2 point[',x+1,y+1,']',level2[x][y],'\n'
 
 	fig, ax = plt.subplots()
 	plt.plot(0,0,'bo')
@@ -49,7 +48,14 @@ if __name__ == "__main__":
 
 	rect_green = patches.Rectangle((6.72,6.72+4.23/2),13.44/2,9.12/2,linewidth=1,edgecolor='g',facecolor='g',alpha = 0.5)
 	ax.add_patch(rect_green)
-	ax.legend([rect_blue,rect_red,rect_green],['Root View','Level 1','Level 2'])
+
+	linear_s = [12,12]
+	plt.plot(12,12,'yo')
+	rect_yellow = patches.Rectangle((10,11),13.44/4,9.12/4,linewidth=1,edgecolor='y',facecolor='y',alpha = 0.5)
+	ax.add_patch(rect_yellow)
+
+	ax.legend([rect_blue,rect_red,rect_green,rect_yellow],['Root View','Level 1 - 4 anchors','Level 2 - 16 anchors','Linear Search - 64 anchors'])
+
 
 	plt.axis([-13.44, 13.44, -4.8, 13.44])
 	plt.show()
