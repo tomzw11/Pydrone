@@ -35,6 +35,9 @@ if __name__ == "__main__":
 			print 'level2 point[',x+1,y+1,']',level2[x][y],'\n'
 
 	fig, ax = plt.subplots()
+
+	ball, = plt.plot(6.72+1.52,6.72+1.52,'mo')
+
 	plt.plot(0,0,'bo')
 	plt.plot([level1[0][0],level1[1][0],level1[2][0],level1[3][0]],[level1[0][1],level1[1][1],level1[2][1],level1[3][1]],'ro')
 
@@ -54,8 +57,7 @@ if __name__ == "__main__":
 	rect_yellow = patches.Rectangle((10,11),13.44/4,9.12/4,linewidth=1,edgecolor='y',facecolor='y',alpha = 0.5)
 	ax.add_patch(rect_yellow)
 
-	ax.legend([rect_blue,rect_red,rect_green,rect_yellow],['Root View','Level 1 - 4 anchors','Level 2 - 16 anchors','Linear Search - 64 anchors'])
-
+	ax.legend([ball,rect_blue,rect_red,rect_green,rect_yellow],['Ball','Root View','Level 1 - 4 anchors','Level 2 - 16 anchors','Linear Search - 64 anchors'])
 
 	plt.axis([-13.44, 13.44, -4.8, 13.44])
 	plt.show()
